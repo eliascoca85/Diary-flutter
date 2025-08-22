@@ -1,16 +1,17 @@
-# diary
 
-A new Flutter project.
+# Diary Flutter App
 
-## Getting Started
+Este proyecto es una aplicación de diario personal desarrollada en Flutter.
 
-This project is a starting point for a Flutter application.
+## Componente de Clima
 
-A few resources to get you started if this is your first Flutter project:
+La aplicación incluye un componente de clima minimalista y atractivo que permite al usuario consultar el clima actual de cualquier ciudad o departamento de Bolivia. El usuario puede escribir el nombre de la ciudad y ver la información meteorológica en tiempo real, incluyendo temperatura, humedad, descripción y un ícono representativo. Si ocurre un error (por ejemplo, ciudad no encontrada), se muestra un mensaje claro al usuario.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Ejemplo de uso del clima
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<p align="center">
+	<img src="lib/assets/img/cochabamba.png" alt="Clima en Cochabamba" width="300" />
+	<img src="lib/assets/img/misque.png" alt="Clima en Misque" width="300" />
+</p>
+
+---
