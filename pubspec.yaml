@@ -35,6 +35,15 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   http: ^1.5.0
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  path_provider: ^2.1.4
+  flutter_local_notifications: ^17.2.2
+  shared_preferences: ^2.3.2
+  timezone: ^0.9.4
+  # Dependencias para manejo de imágenes
+  image_picker: ^1.0.4
+  path: ^1.8.3
 
 dev_dependencies:
   flutter_test:
@@ -46,6 +55,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  isar_generator: ^3.1.0+1
+  build_runner: ^2.4.10
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
