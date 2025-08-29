@@ -405,8 +405,8 @@ class DarkModePreview extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _DarkNavIcon(Icons.favorite_border, AppThemes.primaryColor),
-            _DarkNavIcon(Icons.add, AppThemes.secondaryColor, isMain: true),
+            _DarkNavIcon(Icons.book, AppThemes.primaryColor),
+            _DarkNavIcon(Icons.home, AppThemes.secondaryColor, isMain: true),
             _DarkNavIcon(Icons.person_outline, AppThemes.primaryColor),
           ],
         ),

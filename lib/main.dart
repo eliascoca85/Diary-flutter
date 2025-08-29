@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'app_lock_wrapper.dart';
 import 'providers/theme_provider.dart';
 import 'services/notification_service.dart';
 
@@ -55,7 +55,7 @@ class _DiaryAppState extends State<DiaryApp> {
       debugShowCheckedModeBanner: false,
       theme: _themeProvider.currentTheme,
       themeMode: _themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home: const HomeScreen(),
+      home: const AppLockWrapper(),
     );
   }
 

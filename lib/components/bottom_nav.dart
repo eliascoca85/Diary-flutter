@@ -26,7 +26,7 @@ class BottomNav extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _NavCircleIcon(
-            icon: Icons.favorite_border,
+            icon: Icons.book,
             onTap: () {
               if (currentIndex != 1) {
                 Navigator.pushReplacement(
@@ -53,7 +53,7 @@ class BottomNav extends StatelessWidget {
             isSelected: currentIndex == 1,
           ),
           _NavCircleIcon(
-            icon: Icons.add,
+            icon: Icons.home,
             onTap: () {
               if (currentIndex != 0) {
                 Navigator.pushReplacement(

@@ -44,6 +44,14 @@ dependencies:
   # Dependencias para manejo de imágenes
   image_picker: ^1.0.4
   path: ^1.8.3
+  # Dependencia para grabación de audio (más estable)
+  flutter_sound: ^9.2.13
+  # Dependencia para manejo de permisos
+  permission_handler: ^11.3.1
+  # Dependencia para reproducción de audio
+  just_audio: ^0.9.36
+  # Dependencia para cifrado del código de acceso
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

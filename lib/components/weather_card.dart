@@ -13,6 +13,7 @@ class _WeatherCardState extends State<WeatherCard> {
   bool loading = false;
   String city = "Cochabamba,BO";
   String? errorMsg;
+  bool _hasConnection = true;
   final TextEditingController _controller =
       TextEditingController(text: "Cochabamba,BO");
 
@@ -23,25 +24,61 @@ class _WeatherCardState extends State<WeatherCard> {
       loading = true;
       errorMsg = null;
     });
+
     final service = WeatherService();
-    final queryCity = newCity ?? city;
-    final data = await service.fetchWeatherByCity(queryCity);
 
-    if (!mounted) return; // Verificar nuevamente antes de setState
+    // Verificar conexión a internet primero
+    final hasConnection = await service.hasInternetConnection();
 
-    if (data == null) {
+    if (!hasConnection) {
+      if (!mounted) return;
       setState(() {
-        weatherData = null;
         loading = false;
-        errorMsg =
-            "No se pudo cargar el clima para '$queryCity'. Verifica el nombre.";
+        _hasConnection = false;
+        errorMsg = "Sin conexión a internet";
       });
-    } else {
+      return;
+    }
+
+    setState(() {
+      _hasConnection = true;
+    });
+
+    final queryCity = newCity ?? city;
+
+    try {
+      final data = await service.fetchWeatherByCity(queryCity);
+
+      if (!mounted) return; // Verificar nuevamente antes de setState
+
+      if (data == null) {
+        setState(() {
+          weatherData = null;
+          loading = false;
+          errorMsg =
+              "No se pudo cargar el clima para '$queryCity'. Verifica el nombre.";
+        });
+      } else {
+        setState(() {
+          weatherData = data;
+          city = queryCity;
+          loading = false;
+          errorMsg = null;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+
       setState(() {
-        weatherData = data;
-        city = queryCity;
         loading = false;
-        errorMsg = null;
+        if (e.toString().contains('Sin conexión a internet')) {
+          _hasConnection = false;
+          errorMsg = 'Sin conexión a internet';
+        } else if (e.toString().contains('TimeoutException')) {
+          errorMsg = 'Tiempo de espera agotado (5 segundos)';
+        } else {
+          errorMsg = 'Error al cargar el clima';
+        }
       });
     }
   }
@@ -54,6 +91,11 @@ class _WeatherCardState extends State<WeatherCard> {
 
   @override
   Widget build(BuildContext context) {
+    // No mostrar el widget si no hay conexión a internet
+    if (!_hasConnection) {
+      return const SizedBox.shrink();
+    }
+
     final now = DateTime.now();
     final weekDays = [
       'DOMINGO',
@@ -164,10 +206,28 @@ class _WeatherCardState extends State<WeatherCard> {
           if (loading) const Center(child: CircularProgressIndicator()),
           if (errorMsg != null)
             Center(
-              child: Text(
-                errorMsg!,
-                style: const TextStyle(
-                    color: Colors.red, fontWeight: FontWeight.bold),
+              child: Column(
+                children: [
+                  Text(
+                    errorMsg!,
+                    style: const TextStyle(
+                        color: Colors.red, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    onPressed: () => _fetchWeather(_controller.text.trim()),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reintentar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF007C91),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           if (!loading && errorMsg == null && weatherData != null)

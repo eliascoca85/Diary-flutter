@@ -11,6 +11,8 @@ class CreateNoteScreen extends StatefulWidget {
   final String? noteContent;
   final DateTime? noteDate;
   final List<String>? noteTags;
+  final List<String>? noteImages;
+  final List<String>? noteAudios;
   final int? entryId;
 
   const CreateNoteScreen({
@@ -20,6 +22,8 @@ class CreateNoteScreen extends StatefulWidget {
     this.noteContent,
     this.noteDate,
     this.noteTags,
+    this.noteImages,
+    this.noteAudios,
     this.entryId,
   });
 
@@ -36,6 +40,11 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
   List<String> selectedTags = [];
   List<String> attachedImages = [];
   List<String> attachedAudios = [];
+
+  // Audio recording state
+  bool isRecording = false;
+  bool isPlayingAudio = false;
+  int currentPlayingIndex = -1;
 
   final List<String> predefinedTags = [
     'Personal',
@@ -58,6 +67,8 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
       _contentController.text = widget.noteContent ?? '';
       selectedDate = widget.noteDate ?? DateTime.now();
       selectedTags = List.from(widget.noteTags ?? []);
+      attachedImages = List.from(widget.noteImages ?? []);
+      attachedAudios = List.from(widget.noteAudios ?? []);
     }
   }
 
@@ -414,9 +425,10 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: _buildAttachmentButton(
-                icon: Icons.mic_outlined,
-                label: 'Adjuntar Audio',
+                icon: isRecording ? Icons.stop : Icons.mic_outlined,
+                label: isRecording ? 'Detener grabación' : 'Adjuntar Audio',
                 onTap: _attachAudio,
+                isActive: isRecording,
               ),
             ),
           ],
@@ -506,7 +518,69 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
                   const SizedBox(height: 12),
                 ],
                 if (attachedAudios.isNotEmpty) ...[
-                  Text('Audios: ${attachedAudios.length}'),
+                  const Text(
+                    'Audios adjuntos:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Column(
+                    children: attachedAudios.asMap().entries.map((entry) {
+                      int index = entry.key;
+                      String audioPath = entry.value;
+                      String audioName = audioPath.split('/').last;
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.audiotrack,
+                              color: Color(0xFF007C91),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                audioName,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                isPlayingAudio && currentPlayingIndex == index
+                                    ? Icons.pause_circle
+                                    : Icons.play_circle,
+                                color: Color(0xFF007C91),
+                              ),
+                              onPressed: () =>
+                                  _toggleAudioPlayback(index, audioPath),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                              ),
+                              onPressed: () => _removeAudio(index),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ],
               ],
             ),
@@ -519,28 +593,36 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    bool isActive = false,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey[800]
-              : Colors.white,
+          color: isActive
+              ? Colors.red[50]
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[800]
+                  : Colors.white),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Theme.of(context).dividerColor),
+          border: Border.all(
+              color: isActive ? Colors.red : Theme.of(context).dividerColor),
         ),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFF007C91), size: 20),
+            Icon(icon,
+                color: isActive ? Colors.red : const Color(0xFF007C91),
+                size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 label,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                  color: isActive
+                      ? Colors.red
+                      : Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -710,11 +792,171 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
   }
 
   void _attachAudio() {
+    _showAudioSourceDialog();
+  }
+
+  void _showAudioSourceDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Adjuntar audio'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(
+                  isRecording ? Icons.stop : Icons.mic,
+                  color: isRecording ? Colors.red : Color(0xFF007C91),
+                ),
+                title: Text(
+                  isRecording ? 'Detener grabación' : 'Grabar audio',
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  if (isRecording) {
+                    _stopRecording();
+                  } else {
+                    _startRecording();
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _startRecording() async {
+    try {
+      final bool hasPermission =
+          await MediaService().checkMicrophonePermission();
+      if (!hasPermission) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Se requiere permiso de micrófono para grabar audio'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final bool recordingStarted = await MediaService().startRecording();
+      if (recordingStarted) {
+        setState(() {
+          isRecording = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Grabación iniciada. Toca el botón de audio para detener.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al iniciar grabación: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    try {
+      final String? audioPath = await MediaService().stopRecording();
+      if (audioPath != null) {
+        setState(() {
+          isRecording = false;
+          attachedAudios.add(audioPath);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Grabación guardada exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        isRecording = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al detener grabación: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _toggleAudioPlayback(int index, String audioPath) async {
+    try {
+      if (isPlayingAudio && currentPlayingIndex == index) {
+        // Pausar audio actual
+        await MediaService().pauseAudio();
+        setState(() {
+          isPlayingAudio = false;
+          currentPlayingIndex = -1;
+        });
+      } else {
+        // Detener cualquier audio que esté reproduciéndose
+        if (isPlayingAudio) {
+          await MediaService().stopAudio();
+        }
+
+        // Reproducir nuevo audio
+        final bool playbackStarted = await MediaService().playAudio(audioPath);
+        if (playbackStarted) {
+          setState(() {
+            isPlayingAudio = true;
+            currentPlayingIndex = index;
+          });
+
+          // Crear un timer para verificar cuando termine la reproducción
+          _checkAudioCompletion();
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error en reproducción de audio: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _checkAudioCompletion() {
+    // Verificar periódicamente si el audio sigue reproduciéndose
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && isPlayingAudio) {
+        if (!MediaService().isPlaying) {
+          setState(() {
+            isPlayingAudio = false;
+            currentPlayingIndex = -1;
+          });
+        } else {
+          _checkAudioCompletion(); // Continuar verificando
+        }
+      }
+    });
+  }
+
+  void _removeAudio(int index) {
     setState(() {
-      attachedAudios.add('audio_${DateTime.now().millisecondsSinceEpoch}.mp3');
+      if (currentPlayingIndex == index && isPlayingAudio) {
+        MediaService().stopAudio();
+        isPlayingAudio = false;
+        currentPlayingIndex = -1;
+      }
+      attachedAudios.removeAt(index);
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Próximamente: Grabar audio')),
+      const SnackBar(content: Text('Audio eliminado')),
     );
   }
 
@@ -800,6 +1042,17 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
     _titleController.dispose();
     _contentController.dispose();
     _newTagController.dispose();
+
+    // Cleanup audio resources
+    if (isPlayingAudio) {
+      MediaService().stopAudio();
+    }
+    if (isRecording) {
+      MediaService().stopRecording();
+    }
+    MediaService().disposePlayer();
+    MediaService().disposeRecorder();
+
     super.dispose();
   }
 }

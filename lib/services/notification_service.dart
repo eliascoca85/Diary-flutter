@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
@@ -68,8 +69,54 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
 
+    // Crear canales de notificación
+    await _createNotificationChannels();
+
+    // Solicitar permisos explícitamente
+    await requestPermissions();
+
     // Cargar configuración guardada
     await _loadReminderSettings();
+  }
+
+  Future<void> _createNotificationChannels() async {
+    const AndroidNotificationChannel mainChannel = AndroidNotificationChannel(
+      'main_channel',
+      'Recordatorios Principales',
+      description: 'Notificaciones para recordatorios de escribir en el diario',
+      importance: Importance.high,
+      enableVibration: true,
+      enableLights: true,
+      ledColor: Color(0xFF6200EA),
+    );
+
+    const AndroidNotificationChannel motivationalChannel =
+        AndroidNotificationChannel(
+      'motivational_channel',
+      'Mensajes Motivacionales',
+      description: 'Mensajes motivacionales para escribir en el diario',
+      importance: Importance.defaultImportance,
+      enableVibration: true,
+    );
+
+    const AndroidNotificationChannel weeklyChannel = AndroidNotificationChannel(
+      'weekly_channel',
+      'Resúmenes Semanales',
+      description: 'Recordatorios para revisar la semana',
+      importance: Importance.high,
+      enableVibration: true,
+    );
+
+    final androidImplementation =
+        _notifications.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidImplementation != null) {
+      await androidImplementation.createNotificationChannel(mainChannel);
+      await androidImplementation
+          .createNotificationChannel(motivationalChannel);
+      await androidImplementation.createNotificationChannel(weeklyChannel);
+    }
   }
 
   Future<void> _onNotificationTapped(NotificationResponse response) async {
@@ -165,12 +212,10 @@ class NotificationService {
   Future<void> _scheduleDailyNotification(
       int weekday, int hour, int minute) async {
     try {
-      final now = DateTime.now();
       final scheduledDate = _nextInstanceOfWeekday(weekday, hour, minute);
 
-      if (scheduledDate.isBefore(now)) {
-        return; // No programar en el pasado
-      }
+      print(
+          'Programando notificación para: $scheduledDate (día $weekday, hora $hour:$minute)');
 
       String message = _getRandomMotivationalMessage();
 
@@ -186,13 +231,17 @@ class NotificationService {
         tz.TZDateTime.from(scheduledDate, tz.local),
         const NotificationDetails(
           android: AndroidNotificationDetails(
-            'diary_reminders',
-            'Recordatorios del Diario',
+            'main_channel',
+            'Recordatorios Principales',
             channelDescription:
-                'Notificaciones para recordarte escribir en tu diario',
+                'Notificaciones para recordatorios de escribir en el diario',
             importance: Importance.high,
             priority: Priority.high,
             icon: '@mipmap/ic_launcher',
+            enableVibration: true,
+            enableLights: true,
+            autoCancel: false,
+            fullScreenIntent: true,
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,
@@ -206,6 +255,9 @@ class NotificationService {
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
         payload: 'daily_reminder',
       );
+
+      print(
+          'Notificación programada exitosamente para el día $weekday a las $hour:$minute');
     } catch (e) {
       print('Error programando notificación diaria: $e');
     }
@@ -270,6 +322,39 @@ class NotificationService {
     }
 
     return scheduledDate;
+  }
+
+  // Método para probar notificaciones inmediatamente
+  Future<void> testNotification() async {
+    try {
+      await _notifications.show(
+        999, // ID único para prueba
+        'Prueba de Notificación',
+        'Esta es una notificación de prueba para verificar que funciona correctamente 📱',
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'main_channel',
+            'Recordatorios Principales',
+            channelDescription:
+                'Notificaciones para recordatorios de escribir en el diario',
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+            enableVibration: true,
+            enableLights: true,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        payload: 'test_notification',
+      );
+      print('Notificación de prueba enviada');
+    } catch (e) {
+      print('Error enviando notificación de prueba: $e');
+    }
   }
 
   String _getRandomMotivationalMessage() {

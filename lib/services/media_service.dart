@@ -2,6 +2,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
+import 'package:flutter_sound/flutter_sound.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:just_audio/just_audio.dart';
 
 class MediaService {
   static final MediaService _instance = MediaService._internal();
@@ -9,6 +12,10 @@ class MediaService {
   MediaService._internal();
 
   final ImagePicker _picker = ImagePicker();
+  FlutterSoundRecorder? _audioRecorder;
+  bool _isRecorderInitialized = false;
+  AudioPlayer? _audioPlayer;
+  String? _currentPlayingAudio;
 
   /// Obtener el directorio donde se almacenarán las imágenes de la app
   Future<Directory> get _imageDirectory async {
@@ -161,6 +168,215 @@ class MediaService {
         'totalSizeBytes': 0,
         'totalSizeMB': '0.00',
       };
+    }
+  }
+
+  // ============ MÉTODOS DE AUDIO ============
+
+  /// Inicializar el grabador de audio
+  Future<bool> _initializeRecorder() async {
+    try {
+      if (_audioRecorder == null) {
+        _audioRecorder = FlutterSoundRecorder();
+      }
+
+      if (!_isRecorderInitialized) {
+        await _audioRecorder!.openRecorder();
+        _isRecorderInitialized = true;
+      }
+      return true;
+    } catch (e) {
+      print('Error initializing recorder: $e');
+      return false;
+    }
+  }
+
+  /// Verificar permisos de micrófono
+  Future<bool> checkMicrophonePermission() async {
+    try {
+      // Verificar si ya tenemos el permiso
+      PermissionStatus status = await Permission.microphone.status;
+
+      if (status.isGranted) {
+        return true;
+      }
+
+      // Si no, solicitarlo
+      status = await Permission.microphone.request();
+      return status.isGranted;
+    } catch (e) {
+      print('Error checking microphone permission: $e');
+      return false;
+    }
+  }
+
+  /// Iniciar grabación de audio
+  Future<bool> startRecording() async {
+    try {
+      if (!await _initializeRecorder()) {
+        return false;
+      }
+
+      final audioDir = await _audioDirectory;
+      final fileName = 'audio_${DateTime.now().millisecondsSinceEpoch}.aac';
+      final filePath = path.join(audioDir.path, fileName);
+
+      await _audioRecorder!.startRecorder(
+        toFile: filePath,
+        codec: Codec.aacADTS,
+      );
+      return true;
+    } catch (e) {
+      print('Error starting recording: $e');
+      return false;
+    }
+  }
+
+  /// Detener grabación y retornar la ruta del archivo
+  Future<String?> stopRecording() async {
+    try {
+      if (_audioRecorder != null && _audioRecorder!.isRecording) {
+        return await _audioRecorder!.stopRecorder();
+      }
+      return null;
+    } catch (e) {
+      print('Error stopping recording: $e');
+      return null;
+    }
+  }
+
+  /// Verificar si está grabando
+  Future<bool> isRecording() async {
+    try {
+      return _audioRecorder?.isRecording ?? false;
+    } catch (e) {
+      print('Error checking recording state: $e');
+      return false;
+    }
+  }
+
+  /// Limpiar recursos del grabador
+  Future<void> disposeRecorder() async {
+    try {
+      if (_audioRecorder != null) {
+        await _audioRecorder!.closeRecorder();
+        _audioRecorder = null;
+        _isRecorderInitialized = false;
+      }
+    } catch (e) {
+      print('Error disposing recorder: $e');
+    }
+  }
+
+  /// Eliminar audio del almacenamiento local
+  Future<bool> deleteAudio(String audioPath) async {
+    try {
+      final file = File(audioPath);
+      if (await file.exists()) {
+        await file.delete();
+        return true;
+      }
+    } catch (e) {
+      print('Error deleting audio: $e');
+    }
+    return false;
+  }
+
+  // ============ MÉTODOS DE REPRODUCCIÓN ============
+
+  /// Obtener duración de un archivo de audio
+  Future<Duration?> getAudioDuration(String audioPath) async {
+    try {
+      if (_audioPlayer == null) {
+        _audioPlayer = AudioPlayer();
+      }
+
+      await _audioPlayer!.setFilePath(audioPath);
+      final duration = _audioPlayer!.duration;
+      return duration;
+    } catch (e) {
+      print('Error getting audio duration: $e');
+      return null;
+    }
+  }
+
+  /// Reproducir audio
+  Future<bool> playAudio(String audioPath) async {
+    try {
+      if (_audioPlayer == null) {
+        _audioPlayer = AudioPlayer();
+      }
+
+      // Detener audio actual si está reproduciéndose
+      if (_audioPlayer!.playing) {
+        await _audioPlayer!.stop();
+      }
+
+      await _audioPlayer!.setFilePath(audioPath);
+      await _audioPlayer!.play();
+      _currentPlayingAudio = audioPath;
+      return true;
+    } catch (e) {
+      print('Error playing audio: $e');
+      return false;
+    }
+  }
+
+  /// Pausar audio
+  Future<void> pauseAudio() async {
+    try {
+      if (_audioPlayer != null && _audioPlayer!.playing) {
+        await _audioPlayer!.pause();
+      }
+    } catch (e) {
+      print('Error pausing audio: $e');
+    }
+  }
+
+  /// Detener audio
+  Future<void> stopAudio() async {
+    try {
+      if (_audioPlayer != null) {
+        await _audioPlayer!.stop();
+        _currentPlayingAudio = null;
+      }
+    } catch (e) {
+      print('Error stopping audio: $e');
+    }
+  }
+
+  /// Verificar si está reproduciendo
+  bool get isPlaying => _audioPlayer?.playing ?? false;
+
+  /// Obtener audio actualmente reproduciéndose
+  String? get currentPlayingAudio => _currentPlayingAudio;
+
+  /// Obtener posición actual de reproducción
+  Duration get currentPosition => _audioPlayer?.position ?? Duration.zero;
+
+  /// Limpiar recursos del reproductor
+  Future<void> disposePlayer() async {
+    try {
+      if (_audioPlayer != null) {
+        await _audioPlayer!.dispose();
+        _audioPlayer = null;
+        _currentPlayingAudio = null;
+      }
+    } catch (e) {
+      print('Error disposing player: $e');
+    }
+  }
+
+  /// Formatear duración a string legible
+  static String formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+
+    if (duration.inHours > 0) {
+      return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+    } else {
+      return "$twoDigitMinutes:$twoDigitSeconds";
     }
   }
 }

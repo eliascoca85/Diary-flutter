@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../components/bottom_nav.dart';
 import 'create_note_screen.dart';
+import 'note_view_screen.dart';
 import '../main.dart';
 import '../services/database_service_isar.dart';
 import '../models/diary_entry_isar.dart';
@@ -261,6 +262,8 @@ class _NotesScreenState extends State<NotesScreen> {
           noteContent: entry.content,
           noteDate: entry.date,
           noteTags: entry.tags,
+          noteImages: entry.attachedImages,
+          noteAudios: entry.attachedAudios,
           entryId: entry.id,
         ),
       ),
@@ -322,7 +325,6 @@ class _NotesScreenState extends State<NotesScreen> {
   Widget build(BuildContext context) {
     // Forzar dependencia del tema para que se reconstruya cuando cambie
     final theme = Theme.of(context);
-    final isDarkMode = DiaryApp.appKey.currentState?.isDarkMode ?? false;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -473,12 +475,21 @@ class _NotesScreenState extends State<NotesScreen> {
                           itemBuilder: (context, index) {
                             final entry = _filteredEntries[index];
                             return GestureDetector(
-                              onTap: () {
-                                // Aquí podrías navegar a una pantalla de detalle
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content: Text('Tapped: ${entry.title}')),
+                              onTap: () async {
+                                // Navegar a la pantalla de vista previa
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => NoteViewScreen(
+                                      entry: entry,
+                                    ),
+                                  ),
                                 );
+
+                                // Si se editó o eliminó la nota, recargar la lista
+                                if (result == true) {
+                                  _loadEntries();
+                                }
                               },
                               child: _NoteCard(
                                 title: entry.title,
