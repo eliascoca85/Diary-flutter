@@ -7,160 +7,226 @@
 
 > Una aplicación completa de diario personal con funcionalidades multimedia, seguridad PIN, notificaciones inteligentes e integración meteorológica.
 
-## ✨ Características Principales
+# Diary Flutter - Guía de Desarrollo
 
-### 🔐 **Seguridad Avanzada**
-- Sistema PIN de 4-6 dígitos con encriptación SHA-256
-- Bloqueo automático de la aplicación
-- Protección de datos locales
+## 🚀 Proyecto: Diario Personal Multimedia
 
-### 📝 **Editor Multimedia Completo**
-- Texto enriquecido con formato
-- Captura de fotos (cámara/galería)
-- Grabación y reproducción de audio
-- Fechas automáticas con calendario
+### **Estado Actual: ✅ Completamente Funcional**
 
-### 🌤️ **Widget Meteorológico**
-- Clima en tiempo real
-- Integración con OpenWeatherMap
-- Detección automática de ubicación
-- Timeout inteligente (5 segundos)
-
-### 🔔 **Sistema de Notificaciones**
-- Recordatorios personalizables por días
-- Mensajes motivacionales aleatorios
-- Resúmenes semanales automáticos
-- Compatible con Android 13+
-
-### 📊 **Estadísticas y Análisis**
-- Contador de entradas por mes/año
-- Racha de escritura diaria
-- Progreso visual con gráficos
-- Métricas de productividad
-
-### 🎨 **Personalización**
-- Modo claro/oscuro automático
-- Perfil personalizable con foto
-- Temas adaptativos
-- Interfaz intuitiva
-
-## 🚀 Instalación Rápida
-
-### Prerrequisitos
-- Flutter 3.x instalado
-- Android Studio / VS Code
-- Java 17 (para compilación Android)
-
-### Pasos de Instalación
-
-```bash
-# Clonar el repositorio
-git clone https://github.com/eliascoca85/Diary-flutter.git
-cd Diary-flutter
-
-# Instalar dependencias
-flutter pub get
-
-# Generar archivos de base de datos
-dart run build_runner build --delete-conflicting-outputs
-
-# Ejecutar en modo desarrollo
-flutter run
-
-# Compilar APK para distribución
-flutter build apk --release
-```
-
-## 🏗️ Arquitectura del Proyecto
-
-```
-lib/
-├── 📱 main.dart                 # Punto de entrada
-├── 🔐 app_lock_wrapper.dart     # Sistema de seguridad
-├── 🧩 components/               # Componentes reutilizables
-├── 📺 screens/                  # Pantallas principales
-├── ⚙️ services/                 # Lógica de negocio
-├── 📦 models/                   # Modelos de datos
-├── 🎨 themes/                   # Configuración de UI
-└── 🔄 providers/                # Gestión de estado
-```
-
-### Servicios Principales
-- **`database_service_isar.dart`** - Base de datos NoSQL local
-- **`notification_service.dart`** - Gestión de recordatorios
-- **`weather_service.dart`** - Integración meteorológica
-- **`access_code_service.dart`** - Seguridad PIN
-- **`media_service.dart`** - Manejo multimedia
-
-## 📱 Capturas de Pantalla
-
-### Widget de Clima Integrado
-El componente meteorológico permite consultar el clima en tiempo real de cualquier ciudad:
-
-<p align="center">
-	<img src="lib/assets/img/cochabamba.png" alt="Clima en Cochabamba" width="250" />
-	<img src="lib/assets/img/misque.png" alt="Clima en Misque" width="250" />
-</p>
-
-## 🛠️ Comandos de Desarrollo
-
-```bash
-# Desarrollo diario
-flutter run                     # Ejecutar con hot reload
-flutter clean                   # Limpiar cache
-flutter pub get                 # Actualizar dependencias
-
-# Base de datos
-dart run build_runner build     # Regenerar archivos Isar
-dart run build_runner clean     # Limpiar archivos generados
-
-# Compilación
-flutter build apk              # APK debug
-flutter build apk --release    # APK producción
-flutter build appbundle        # Android App Bundle
-```
-
-## 🔧 Configuración Adicional
-
-### API de Clima
-Para activar el widget meteorológico, configura tu API key de OpenWeatherMap:
-
-```dart
-// lib/services/weather_service.dart
-static const String _apiKey = 'TU_API_KEY_AQUI';
-```
-
-### Notificaciones Android
-Las notificaciones requieren permisos específicos que ya están configurados en `AndroidManifest.xml`.
-
-## 📖 Documentación Técnica
-
-Para información detallada sobre desarrollo y arquitectura, consulta:
-- [`DEVELOPMENT_GUIDE.md`](DEVELOPMENT_GUIDE.md) - Guía completa de desarrollo
-- [`ISAR_SETUP_GUIDE.md`](ISAR_SETUP_GUIDE.md) - Configuración de base de datos
-
-## 🤝 Contribución
-
-Las contribuciones son bienvenidas. Para cambios importantes:
-
-1. Fork el proyecto
-2. Crea una branch (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add AmazingFeature'`)
-4. Push a la branch (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT - ve el archivo [LICENSE](LICENSE) para detalles.
-
-## 👨‍💻 Desarrollador
-
-**Elias Coca**
-- GitHub: [@eliascoca85](https://github.com/eliascoca85)
-- Proyecto: [Diary-flutter](https://github.com/eliascoca85/Diary-flutter)
+- 🎯 **Base de Datos**: Isar Database (NoSQL local)
+- 🔐 **Seguridad**: Sistema PIN completo
+- 📱 **Multimedia**: Fotos, audio, texto
+- 🌤️ **Clima**: Integración con API meteorológica
+- 🔔 **Notificaciones**: Recordatorios programables
+- 🎨 **Temas**: Modo claro/oscuro
 
 ---
 
-### 🏆 Estado del Proyecto: **Completamente Funcional** ✅
+## 📋 Arquitectura del Proyecto
+
+### **📁 Estructura Principal**
+
+```
+lib/
+├── main.dart                    # Punto de entrada
+├── app_lock_wrapper.dart        # Sistema de seguridad PIN
+├── components/                  # Componentes reutilizables
+│   ├── bottom_nav.dart
+│   ├── empty_diary.dart
+│   └── weather_card.dart
+├── screens/                     # Pantallas de la app
+│   ├── home_screen.dart
+│   ├── create_note_screen.dart
+│   ├── notes_screen.dart
+│   ├── note_view_screen.dart
+│   ├── profile_screen.dart
+│   ├── statistics_screen.dart
+│   ├── reminders_screen.dart
+│   ├── access_code_setup_screen.dart
+│   └── access_code_verification_screen.dart
+├── services/                    # Lógica de negocio
+│   ├── database_service_isar.dart
+│   ├── notification_service.dart
+│   ├── weather_service.dart
+│   ├── access_code_service.dart
+│   └── media_service.dart
+├── models/                      # Modelos de datos
+├── themes/                      # Configuración de temas
+└── providers/                   # Gestión de estado
+```
+
+---
+
+## 🛠️ Comandos de Desarrollo
+
+### **🧹 Limpiar y Compilar**
+
+```bash
+# Limpiar proyecto
+flutter clean
+
+# Obtener dependencias
+flutter pub get
+
+# Generar archivos Isar (si es necesario)
+dart run build_runner build --delete-conflicting-outputs
+
+# Compilar APK
+flutter build apk --release
+```
+
+### **🔧 Desarrollo**
+
+```bash
+# Ejecutar en modo debug
+flutter run
+
+# Hot reload activo durante desarrollo
+# Ctrl+S para aplicar cambios
+```
+
+---
+
+## 🎯 Funcionalidades Principales
+
+### **✅ Sistema de Seguridad**
+
+- **Configuración de PIN**: 4-6 dígitos
+- **Bloqueo automático**: Al cerrar la app
+- **Verificación segura**: SHA-256 hash
+
+### **✅ Gestión de Entradas**
+
+- **Texto enriquecido**: Editor completo
+- **Multimedia**: Fotos desde cámara/galería
+- **Audio**: Grabación y reproducción
+- **Fechas**: Automáticas con calendario
+
+### **✅ Características Avanzadas**
+
+- **Clima**: Widget meteorológico automático
+- **Estadísticas**: Conteo de entradas, rachas
+- **Notificaciones**: Recordatorios personalizables
+- **Búsqueda**: Por fecha, contenido
+- **Exportación**: Backup de datos
+
+### **✅ Personalización**
+
+- **Temas**: Claro/Oscuro
+- **Perfil**: Nombre de usuario, foto
+- **Recordatorios**: Días y horarios flexibles
+
+---
+
+## 🔔 Sistema de Notificaciones
+
+### **Configuración Actual**
+
+- **Permisos**: Android 13+ compatibilidad
+- **Canales**: Múltiples tipos de notificaciones
+- **Programación**: Alarmas exactas con timezone
+- **Pruebas**: Botón de prueba en perfil
+
+### **Tipos de Recordatorios**
+
+1. **Diarios**: Días específicos de la semana
+2. **Motivacionales**: Mensajes aleatorios
+3. **Semanales**: Resumen dominical
+4. **Rachas**: Motivación por continuidad
+
+---
+
+## 🌤️ Integración Meteorológica
+
+### **Características**
+
+- **API**: OpenWeatherMap
+- **Timeout**: 5 segundos
+- **Ubicación**: Basada en IP
+- **Cache**: Datos locales temporales
+- **Error handling**: Modo offline graceful
+
+---
+
+## 📱 Compatibilidad y Rendimiento
+
+### **Plataformas Soportadas**
+
+- ✅ **Android**: API 21+ (Android 5.0+)
+- ✅ **iOS**: iOS 12+
+- ⚙️ **Web**: Funcionalidad limitada
+- ⚙️ **Desktop**: En desarrollo
+
+### **Optimizaciones**
+
+- **Base de datos local**: Sin dependencia de internet
+- **Imágenes**: Compresión automática
+- **Audio**: Formato optimizado
+- **Cache inteligente**: Datos frecuentes
+
+---
+
+## 📈 Próximas Mejoras
+
+### **🎯 Features Planificadas**
+
+- [ ] **Sincronización en la nube**
+- [ ] **Compartir entradas**
+- [ ] **Plantillas de entrada**
+- [ ] **Análisis de sentimientos**
+- [ ] **Exportar PDF**
+- [ ] **Widget de pantalla principal**
+
+### **🔧 Optimizaciones Técnicas**
+
+- [ ] **Lazy loading** para listas grandes
+- [ ] **Compresión** de imágenes mejorada
+- [ ] **Cache** de red más inteligente
+- [ ] **Animations** más fluidas
+
+---
+
+## 🏆 Estado del Proyecto
+
+### **✅ Completado (100%)**
+
+- Sistema de autenticación PIN
+- CRUD completo de entradas
+- Multimedia (fotos, audio)
+- Sistema de notificaciones
+- Integración meteorológica
+- Temas claro/oscuro
+- Estadísticas básicas
+
+### **📊 Métricas**
+
+- **Líneas de código**: ~15,000
+- **Pantallas**: 11 principales
+- **Servicios**: 5 especializados
+- **Componentes**: 3 reutilizables
+- **Base de datos**: Isar NoSQL
+
+---
+
+## 📞 Información de Desarrollo
+
+### **Tecnologías Utilizadas**
+
+- **Framework**: Flutter 3.x
+- **Base de datos**: Isar 3.1.0+1
+- **Estado**: StatefulWidget + SharedPreferences
+- **Multimedia**: image_picker, flutter_sound
+- **Notificaciones**: flutter_local_notifications
+- **HTTP**: dart:io + http package
+- **Criptografía**: crypto (SHA-256)
+
+### **Arquitectura**
+
+- **Patrón**: Service Layer + State Management
+- **Persistencia**: Local-first con Isar
+- **UI**: Material Design 3
+- **Navegación**: Named routes
+
+
 
 *Última actualización: Agosto 2025*
